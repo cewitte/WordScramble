@@ -16,13 +16,28 @@ struct ContentView: View {
     @State private var errorMessage = ""
     @State private var showingError = false
     
+    @State private var score = 0
+    
     var body: some View {
         NavigationStack {
+            Spacer()
+            Spacer()
+            Section("Score"){
+                Spacer()
+                HStack {
+                    Image(systemName: "\(score).circle")
+                        .imageScale(.large)
+                }
+            }
+            
             List {
                 Section {
                     TextField("Enter your word", text: $newWord)
                         .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
                 }
+                
+                
                 
                 Section {
                     ForEach(usedWords, id: \.self) { word in
@@ -32,6 +47,8 @@ struct ContentView: View {
                         }
                     }
                 }
+                
+                
             }
             .navigationTitle(rootWord)
             .onSubmit(addNewWord)
@@ -41,6 +58,10 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage)
             }
+            .toolbar {
+                Button("Reset", action: reset)
+            }
+
         }
     }
     
@@ -66,9 +87,20 @@ struct ContentView: View {
             return
         }
         
+        guard isLessThan3Letters(word: answer) else {
+            wordError(title: "Word has less than 3 letters", message: "Come on! You can do better than that!")
+            return
+        }
+        
+        guard isJustOurStartWord(word: answer) else {
+            wordError(title: "Word is part of the original", message: "Don't try to cheat!")
+            return
+        }
+        
         withAnimation {
             usedWords.insert(answer, at: 0)
-            newWord = ""            
+            newWord = ""      
+            score += answer.count
         }
     }
     
@@ -120,13 +152,26 @@ struct ContentView: View {
         return misspelledRange.location == NSNotFound
     }
     
+    func isLessThan3Letters(word: String) -> Bool {
+        !(word.count < 3)
+    }
+    
+    func isJustOurStartWord(word: String) -> Bool {
+        !rootWord.starts(with: word)
+    }
+    
     func wordError(title: String, message: String) {
         errorTitle = title
         errorMessage = message
         showingError = true
     }
     
-    
+    func reset() {
+        usedWords.removeAll()
+        score = 0
+        startGame()
+    }
+
 }
 
 #Preview {
